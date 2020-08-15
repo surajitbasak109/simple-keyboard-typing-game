@@ -1,26 +1,23 @@
-// define the time limit
+// define time limit
 let TIME_LIMIT = 60;
 
-// define quotes to be used
-let quotes_array = [
-  'Push yourself, because no one else is going to do it for you.',
-  'Failure is the condiment that gives success its flavor.',
-  'Wake up with determination. Go to bed with satisfaction.',
-  "It's going to be hard, but hard does not mean impossible.",
-  'Learning never exhausts the mind.',
-  'The only way to do great work is to love what you do.',
+// define quotes array
+const quotes_array = [
+  `'mI selfish, impatient and a little insecure. I make mistakes, I am out of control and at times hard to handle. But if you can't handle me at my worst, then you sure as hell don't deserve me at my best.`,
+  `Two things are infinite: the universe and human stupidity; and I'm not sure about the universe.`,
+  `A room without books is like a body without a soul.`,
+  `If you want to know what a man's like, take a good look at how he treats his inferiors, not his equals.`,
+  `I've learned that people will forget what you said, people will forget what you did, but people will never forget how you made them feel.`,
 ];
 
-// select required elements
+// select html elements
 let wpm_text = document.querySelector('.curr_wpm');
 let cpm_text = document.querySelector('.curr_cpm');
-let error_text = document.querySelector('.curr_errors');
+let errors_text = document.querySelector('.curr_errors');
 let timer_text = document.querySelector('.curr_time');
 let accuracy_text = document.querySelector('.curr_accuracy');
 let wpm_group = document.querySelector('.wpm');
 let cpm_group = document.querySelector('.cpm');
-let error_group = document.querySelector('.errors');
-let accuracy_group = document.querySelector('.accuracy');
 let quote_text = document.querySelector('.quote');
 let input_area = document.querySelector('.input_area');
 let restart_btn = document.querySelector('.restart_btn');
@@ -30,166 +27,177 @@ let timeLeft = TIME_LIMIT;
 let timeElapsed = 0;
 let total_errors = 0;
 let errors = 0;
-let accuracy = 0;
-let characterTyped = 0;
-let current_quote = '';
+let curr_qoute = '';
 let quoteNo = 0;
 let timer = null;
+let characterTyped = 0;
+let accuracy = 0;
 
-function updateQuote() {
-  // 1) reset quote text
+const updateQuotes = () => {
+  // remove previous text
   quote_text.textContent = null;
-  // 2) get quote from the quote array
-  current_quote = quotes_array[quoteNo];
-  // 3) separate each character and make an element
-  // out of each of them to individually style them
-  current_quote.split('').forEach((char) => {
-    const charSpan = document.createElement('span');
+  // get the current quote
+  curr_qoute = quotes_array[quoteNo];
+
+  // separate each characters and make them element
+  // so that we can style them
+  curr_qoute.split('').forEach((char) => {
+    // create a span
+    let charSpan = document.createElement('span');
     charSpan.textContent = char;
     quote_text.appendChild(charSpan);
   });
-  // 4) roll over to the first quote
+
+  // roll over to the zero index, first array element
   if (quoteNo < quotes_array.length - 1) {
     quoteNo++;
   } else {
     quoteNo = 0;
   }
-}
+};
 
-function processCurrentText() {
-  // 1) get input values and split it
-  let current_input = input_area.value;
-  let current_input_array = current_input.split('');
+const processCurrentInput = () => {
+  // get current input
+  let curr_input = input_area.value;
+  let curr_input_array = curr_input.split('');
 
-  // 2) increment charactes typed
+  // increment typed characters
   characterTyped++;
-
-  // 3) set the errors to 0
+  // set the errors to zero
   errors = 0;
 
-  // 4) get all the quote spans
-  let quoteSpanArray = quote_text.querySelectorAll('span');
+  let charSpanArray = quote_text.querySelectorAll('span');
 
-  // 4) loop through all the quote spans
-  quoteSpanArray.forEach((char, index) => {
-    let typedChar = current_input_array[index];
+  // loop through the span elements
+  charSpanArray.forEach((char, index) => {
+    // get the typed character
+    let typedChar = curr_input_array[index];
 
-    // characters not currently typed
+    // character currenlty not typed
     if (typedChar == null) {
+      // remove all the incorrect_char and correct_char class
       char.classList.remove('correct_char');
       char.classList.remove('incorrect_char');
     }
-    // correct characters
+    // correct character
     else if (typedChar === char.innerText) {
+      // add correct_char and remove incorrect_char class
       char.classList.add('correct_char');
       char.classList.remove('incorrect_char');
     }
-    // incorrect characters
+
+    // incorrect character
     else {
-      char.classList.add('incorrect_char');
+      // add incorrect_char and remove correct_char class
       char.classList.remove('correct_char');
+      char.classList.add('incorrect_char');
+
+      // increment errors
       errors++;
     }
   });
 
-  // 5) show total errors
-  error_text.textContent = total_errors + errors;
+  // update errors text
+  errors_text.textContent = total_errors + errors;
 
-  // 6) calculate accuracy in percentage
+  // calculate accuracy
   let correctCharacters = characterTyped - (total_errors + errors);
-  let accuracyVal = (correctCharacters / characterTyped) * 100;
+  let accuracyVal = Math.round((correctCharacters / characterTyped) * 100);
 
-  // 7) show accuracy
-  accuracy_text.textContent = Math.round(accuracyVal);
+  // udpate the accuracy text
+  accuracy_text.textContent = accuracyVal;
 
-  // 8) if current text is completely typed
-  // irrespective of errors
-  if (current_input.length === current_quote.length) {
-    // update new quote
-    updateQuote();
+  // if user typed all the text in quote text
+  // irrespective to all the errors
+  if (curr_input.length == curr_qoute.length) {
+    // udpate next quote
+    updateQuotes();
 
-    // update total errors
-    total_errors += errors;
-
-    // clear input field
+    // clear the values
     input_area.value = '';
-  }
-}
 
-function updateTimer() {
+    // increment total errors
+    total_errors += errors;
+  }
+};
+
+const updateTimer = () => {
   if (timeLeft > 0) {
-    // decrease the timer
+    // decrement time left
     timeLeft--;
 
-    // increase time elapsed
+    // increment time elapsed
     timeElapsed++;
 
-    // update the timer text
     timer_text.textContent = timeLeft + 's';
   } else {
-    // finish the game
     finishGame();
   }
-}
+};
 
-function finishGame() {
-  // 1) reset timer
+const finishGame = () => {
+  // reset the timer
   clearInterval(timer);
 
-  // 2) disable input area
+  // disable the input field
   input_area.disabled = true;
 
-  // 3) show finishing text
-  quote_text.textContent = 'Click on restart button to start typing.';
+  // show finishing text
+  quote_text.textContent = 'Click on restart to start the game.';
 
-  // 4) display restart button
+  // display restart button
   restart_btn.style.display = 'block';
 
-  // 5) calculate cpm and wpm
-  let cpm = Math.round((characterTyped / timeElapsed) * 60);
-  let wpm = Math.round((characterTyped / 5 / timeElapsed) * 60);
+  // calculate cpm and wpm
+  let cpm = Math.floor((characterTyped / timeElapsed) * 60);
+  let wpm = Math.floor((characterTyped / 5 / timeElapsed) * 60);
 
-  // 6) update cpm and wpm text
+  // udpate cpm and wpm text
   cpm_text.textContent = cpm;
   wpm_text.textContent = wpm;
 
-  // 7) display cpm and wpm
-  cpm_group.style.display = 'block';
+  // display wpm and cpm
   wpm_group.style.display = 'block';
-}
+  cpm_group.style.display = 'block';
+};
 
-function resetValues() {
+const resetValues = () => {
   timeLeft = TIME_LIMIT;
   timeElapsed = 0;
   total_errors = 0;
   errors = 0;
-  accuracy = 0;
-  characterTyped = 0;
-  current_quote = '';
   quoteNo = 0;
+  timer = null;
+  characterTyped = 0;
+  accuracy = 0;
+
+  // enable the input area
+  input_area.value = '';
   input_area.disabled = false;
 
-  input_area.value = '';
-  quote_text.textContent = 'Click on the area below to start the game.';
+  // update quote text
+  quote_text.textContent = 'Click below the area to start the game.';
+
   accuracy_text.textContent = 100;
+  errors_text.textContent = 0;
   timer_text.textContent = timeLeft + 's';
-  error_text.textContent = 0;
+
   restart_btn.style.display = 'none';
-  cpm_group.style.display - 'none';
-  wpm_group.style.display - 'none';
-}
 
-function startGame() {
-  resetValues();
-  updateQuote();
+  wpm_group.style.display = 'none';
+  cpm_group.style.display = 'none';
+};
 
-  // 1) clear old and update the timer
+const startGame = () => {
+  updateQuotes();
+
   clearInterval(timer);
   let user_typed = false;
-  input_area.addEventListener('input', function () {
+
+  input_area.addEventListener('input', () => {
     if (!user_typed) {
       timer = setInterval(updateTimer, 1000);
       user_typed = true;
     }
   });
-}
+};
